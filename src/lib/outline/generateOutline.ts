@@ -1,4 +1,4 @@
-import type { Brief } from "../types/brief";
+import type { Brief } from "../../types/brief";
 
 export default function generateOutline(
   brief: Pick<

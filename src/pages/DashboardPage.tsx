@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import useLocalStorageState from "../hooks/useLocalStorageState";
 import type { Idea } from "../types/idea";
 import type { Brief } from "../types/brief";
-import generateOutline from "../lib/generateOutline";
+import generateOutline from "../lib/outline/generateOutline";
 
 import { useBriefStore } from "../stores/useBriefStore";
 
