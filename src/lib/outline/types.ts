@@ -11,7 +11,7 @@ export type OutlineResult = {
 };
 
 export type OutlineGenerator = {
-  id: "local" | "ai";
+  id: "local" | "ai-mock" | "ai-server";
   label: string;
   generate: (
     input: OutlineInput,

@@ -13,7 +13,7 @@ function sleep(ms: number, signal?: AbortSignal) {
 }
 
 export const aiMockGenerator: OutlineGenerator = {
-  id: "ai",
+  id: "ai-mock",
   label: "AI (mock)",
   async generate(input, opts) {
     const signal = opts?.signal;

@@ -4,9 +4,10 @@
   "version": "0.0.0",
   "type": "module",
   "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
+    "dev:client": "vite",
+    "dev:server": "tsx watch server/index.ts",
+    "dev": "concurrently -n client,server -c auto \"npm:dev:client\" \"npm:dev:server\"",
+    "build": "vite build",
     "preview": "vite preview"
   },
   "dependencies": {

@@ -72,7 +72,7 @@ export default function DashboardPage() {
       navigate(`/briefs/${brief.id}`);
     } catch (err: unknown) {
       if (err instanceof Error && err.name === "AbortError") return;
-      setError("Something went wrong.");
+      setError(err instanceof Error ? err.message : "Something went wrong.");
     } finally {
       setIsGenerating(false);
       setAbortCtrl(null);
