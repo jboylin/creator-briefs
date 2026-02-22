@@ -3,7 +3,8 @@ import { Link, useNavigate } from "react-router-dom";
 import useLocalStorageState from "../hooks/useLocalStorageState";
 import type { Idea } from "../types/idea";
 import type { Brief } from "../types/brief";
-import generateOutline from "../lib/outline/generateOutline";
+
+import { outlineGenerators, type GeneratorId } from "../lib/outline/generators";
 
 import { useBriefStore } from "../stores/useBriefStore";
 
@@ -19,36 +20,67 @@ export default function DashboardPage() {
   const [goal, setGoal] = useState("Generate leads");
   const [tone, setTone] = useState("Friendly");
 
+  const [generatorId, setGeneratorId] = useState<GeneratorId>("local");
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [previewOutline, setPreviewOutline] = useState<string[] | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [abortCtrl, setAbortCtrl] = useState<AbortController | null>(null);
+
   const selectedIdea = useMemo(
     () => ideas.find((i) => i.id === ideaId),
     [ideas, ideaId]
   );
 
-  function createBrief() {
+  async function createBrief() {
+    setError(null);
+    setPreviewOutline(null);
+
     const cleanedTitle = title.trim();
     const briefTitle = cleanedTitle || (selectedIdea?.text ?? "").trim();
     if (!briefTitle) return;
 
-    const outline = generateOutline({
-      title: briefTitle,
-      ideaText: selectedIdea?.text,
-      intendedAudience: audience,
-      goal,
-      tone,
-    });
+    const gen = outlineGenerators.find((g) => g.id === generatorId)!;
 
-    const brief: Brief = {
-      id: crypto.randomUUID(),
-      title: briefTitle,
-      ideaText: selectedIdea?.text,
-      intendedAudience: audience,
-      goal,
-      tone,
-      outline,
-      createdAt: Date.now(),
-    };
-    addBrief(brief);
-    navigate(`/briefs/${brief.id}`);
+    const controller = new AbortController();
+    setAbortCtrl(controller);
+    setIsGenerating(true);
+
+    try {
+      const result = await gen.generate(
+        {
+          title: briefTitle,
+          ideaText: selectedIdea?.text,
+          intendedAudience: audience,
+          goal,
+          tone,
+        },
+        { signal: controller.signal }
+      );
+      setPreviewOutline(result.outline);
+
+      const brief: Brief = {
+        id: crypto.randomUUID(),
+        title: briefTitle,
+        ideaText: selectedIdea?.text,
+        intendedAudience: audience,
+        goal,
+        tone,
+        outline: result.outline,
+        createdAt: Date.now(),
+      }
+      addBrief(brief);
+      navigate(`/briefs/${brief.id}`);
+    } catch (err: unknown) {
+      if (err instanceof Error && err.name === "AbortError") return;
+      setError("Something went wrong.");
+    } finally {
+      setIsGenerating(false);
+      setAbortCtrl(null);
+    }
+  }
+
+  function cancelGeneration() {
+    abortCtrl?.abort();
   }
 
   return (
@@ -150,12 +182,59 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <button
-          onClick={createBrief}
-          className="w-full bg-gray-900 text-white py-2 rounded-lg text-sm hover:bg-black transition"
-        >
-          Create brief
-        </button>
+        <div>
+          <label className="block text-xs font-medium text-gray-700 mb-1">
+            Generator
+          </label>
+          <select
+            value={generatorId}
+            onChange={(e) => setGeneratorId(e.target.value as GeneratorId)}
+            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm bg-white focus:outline-none focus:ring-2 focus:ring-gray-300"
+            disabled={isGenerating}
+          >
+            {outlineGenerators.map((g) => (
+              <option key={g.id} value={g.id}>
+                {g.label}
+              </option>
+            ))}
+          </select>
+          <div className="text-xs text-gray-500 mt-1">
+            The AI generator is a mock for now and will be slower than the local one.
+          </div>
+        </div>
+
+        <div className="flex gap-2">
+          <button
+            onClick={createBrief}
+            disabled={isGenerating}
+            className="flex-1 bg-gray-900 text-white py-2 rounded-lg text-sm hover:bg-black transition disabled:opacity-60"
+          >
+            {isGenerating ? "Generating..." : "Create brief"}
+          </button>
+          {isGenerating ? (
+            <button
+              onClick={cancelGeneration}
+              className="px-3 py-2 rounded-lg border border-gray-200 text-sm hover:bg-gray-50"
+            >
+              Cancel
+            </button>
+          ) : null}
+        </div>
+
+        {error ? <div className="mt-3 text-sm text-red-600">{error}</div> : null}
+
+        {
+          previewOutline ? (
+            <div className="mt-4">
+              <h2 className="text-xs uppercase tracking-wide text-gray-500 mb-2">Preview outline:</h2>
+              <ol className="list-decimal pl-5 space-y-2">
+                {previewOutline.map((step, i) => (
+                  <li key={i}>{step}</li>
+                ))}
+              </ol>
+            </div>
+          ) : null
+        }
 
         <div className="text-xs text-gray-500">
           You currently have <span className="font-medium">{ideas.length}</span> idea
