@@ -23,7 +23,7 @@ export default function BriefsPage() {
           <h1 className="text-2xl font-semibold text-gray-900">Your Briefs</h1>
           <p className="text-sm text-gray-500">Manage your content briefs here.</p>
         </div>
-        <Link to="/new" className="bg-black text-white px-4 py-2 rounded-lg hover:opacity-90">
+        <Link to="/" className="bg-black text-white px-4 py-2 rounded-lg hover:opacity-90">
           Create Brief
         </Link>
       </div>
