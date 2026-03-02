@@ -55,7 +55,7 @@ app.post("/api/outline", async (req, res) => {
             `Goal: ${input.goal}`,
             `Tone: ${input.tone}`,
             "",
-            "Generate 7–10 bullet points for the outline. Keep each bullet short and actionable.",
+            "Generate 7 bullet points for the outline. Keep each bullet short and actionable.",
           ]
             .filter(Boolean)
             .join("\n"),
